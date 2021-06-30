@@ -1,4 +1,4 @@
-import React, { useContext, useCallback, useMemo } from 'react'
+import React, { useContext, useCallback, useMemo, useRef, useLayoutEffect, useEffect } from 'react'
 import styled, { css } from 'styled-components'
 
 import { componentSize, opacity } from '../designparams'
@@ -6,6 +6,7 @@ import { CheckboxChangeHandler, Checkbox } from '../Checkbox'
 
 import { useGridTemplateColumns } from './Table'
 import { TableContext } from './context'
+import { modifyColumnMaxWidth } from './ColumnResizerRow'
 
 import {
   TableCellMenu,
@@ -68,12 +69,12 @@ const TableRowGrid = styled.div<{
 
   & ${TableCellContent} {
     ${({ disabled }) =>
-      disabled
-        ? css`
+    disabled
+      ? css`
             opacity: ${opacity[48]}; /* TODO: to be decided */
             pointer-events: none;
           `
-        : undefined};
+      : undefined};
   }
 
   cursor: ${({ clickable, disabled }) =>
@@ -113,6 +114,9 @@ export interface TableRowProps extends BaseProps {
    */
   readonly onClicked?: React.MouseEventHandler<HTMLDivElement>
 }
+
+let arr: number[] = []
+
 
 export const TableRow: React.FC<TableRowProps> = React.memo(
   ({
@@ -160,11 +164,30 @@ export const TableRow: React.FC<TableRowProps> = React.memo(
       ) : null
     }, [onSelect, clickable, selected, onChange, disabled])
 
+    const refs = useRef<HTMLDivElement[]>([]);
+
     const tableCellContent = useMemo(() => {
       return React.Children.map(children, (cell, cellId) => {
-        return <TableCellContent key={cellId}>{cell}</TableCellContent>
+        return <TableCellContent ref={(ref: HTMLDivElement) => refs.current.push(ref)} key={cellId}>{cell}</TableCellContent>
       })
     }, [children])
+
+    useLayoutEffect(() => {
+      if (!tableCellContent) return;
+      
+      const widestChildren: number[] = refs.current.map((divElement: HTMLDivElement) => {
+        if (!divElement) return 0;
+        const divElementChildren = Array.prototype.slice.call(divElement.children);
+        const childrenWidths = divElementChildren.map(e => e.getBoundingClientRect().width);
+        const widestChild = Math.max(...childrenWidths);
+        return widestChild;
+      })
+
+      modifyColumnMaxWidth(widestChildren, tableCellContent.length)
+
+      //Resets the refs, preferable solution would be too make the tableCellContent overwrite the previous refs array
+      refs.current = []
+    }, [tableCellContent])
 
     const tableMenuContent = useMemo(() => {
       return hasMenu ? (

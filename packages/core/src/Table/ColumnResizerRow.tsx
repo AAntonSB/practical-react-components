@@ -50,7 +50,7 @@ const ResizeContainer = styled.div.attrs<{ readonly left: number }>(
       style: { left: `${left - 8}px` },
     }
   }
-)<{ readonly left: number }>`
+) <{ readonly left: number }>`
   display: relative;
   position: absolute;
   width: 16px;
@@ -96,6 +96,26 @@ const ResizeMarker = styled.div<{
   }
 `
 
+let widestContentWidths: number[] = []
+
+export const modifyColumnMaxWidth = (columnContentWidth: number[], columnContentWidthLength: number) => {
+  for (let i = 0; i < columnContentWidthLength; i++) {
+    if (widestContentWidths[i] === undefined) {
+      widestContentWidths[i] = columnContentWidth[i]
+    } else if (widestContentWidths[i] <= columnContentWidth[i]) {
+      widestContentWidths[i] = columnContentWidth[i]
+    }
+  }
+}
+
+const getModifiedWidths = (columnWidths: readonly number[]) => {
+  let newColumnSizes = widestContentWidths.map(e => e + TABLE_DIMENSIONS.PADDING_LEFT)
+  // Get the padding to fill the table to the right
+  const paddingRight = columnWidths.reduce((acc, cur) => acc + cur, 0) - newColumnSizes.reduce((acc, cur) => acc + cur, 0)
+  newColumnSizes[newColumnSizes.length - 1] += paddingRight;
+  return newColumnSizes
+}
+
 /**
  * ColumnResizer
  *
@@ -115,7 +135,7 @@ const ColumnResizer: React.FunctionComponent<ColumnResizerProps> = ({
   setDragging,
   onDragEnd,
 }) => {
-  const { minColumnWidth } = useContext(TableContext)
+  const { minColumnWidth, dispatchWidthsAction, columnWidths } = useContext(TableContext)
 
   const [[tx], onDragStart, dragging] = useDraggable(onDragEnd)
   const txClipped = clipTranslation(tx, divider, minColumnWidth)
@@ -131,7 +151,7 @@ const ColumnResizer: React.FunctionComponent<ColumnResizerProps> = ({
   }, [dragging, setDragging])
 
   return (
-    <ResizeContainer left={divider.offset + txClipped}>
+    <ResizeContainer onDoubleClick={() => dispatchWidthsAction({ type: WidthActionType.UPDATE_WIDTHS, widths: getModifiedWidths(columnWidths) })} left={divider.offset + txClipped}>
       <ResizeHandle onPointerDown={onDragStart} />
       <ResizeMarker dragging={dragging} />
     </ResizeContainer>
