@@ -240,7 +240,7 @@ const TableContentContainer = styled.div.attrs<{
   return {
     style: { width: `${width}px`, maxHeight: `${maxHeight}px` },
   }
-})<{
+}) <{
   readonly maxHeight?: number
   readonly width: number
 }>`
@@ -385,8 +385,8 @@ export const Table: React.FunctionComponent<TableProps> = React.memo(
       maxHeight !== undefined
         ? maxHeight * TABLE_DIMENSIONS.ROW_HEIGHT
         : tableHeight !== undefined
-        ? tableHeight - TABLE_DIMENSIONS.ROW_HEIGHT
-        : undefined
+          ? tableHeight - TABLE_DIMENSIONS.ROW_HEIGHT
+          : undefined
 
     const { header, rows } = useMemo(() => {
       const [headerEl, ...rowsEl] = React.Children.toArray(children)
@@ -396,6 +396,13 @@ export const Table: React.FunctionComponent<TableProps> = React.memo(
     const tableContentRef = useRef<HTMLDivElement>(null)
     // Scroll to top when scrollKey changes
     useResetScroll(tableContentRef, scrollKey)
+
+    const [getWidthsList, setGetListsWidth] = useState<Array<(callback: () => Array<number>) => void>>([])
+
+    const updateGetWidthsList = (callback: () => Array<number>) => {
+      if (!callback) return
+      setGetListsWidth(getWidths => [...getWidths, callback])
+    }
 
     return (
       <TableContainer ref={tableRef} dragging={dragging} {...props}>
@@ -409,6 +416,8 @@ export const Table: React.FunctionComponent<TableProps> = React.memo(
             onSelect,
             hasMenu,
             onWidthsChange,
+            getWidthsList,
+            updateGetWidthsList
           }}
         >
           <TableHeaderContainer>{header}</TableHeaderContainer>

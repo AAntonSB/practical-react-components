@@ -1,4 +1,4 @@
-import React, { useContext, useCallback, useEffect } from 'react'
+import React, { useContext, useCallback, useEffect, useRef, useMemo } from 'react'
 import styled from 'styled-components'
 
 import { componentSize } from '../designparams'
@@ -62,7 +62,7 @@ export const TableHeader: React.FC<TableHeaderProps> = ({
   menu,
   ...props
 }) => {
-  const { onSelect, hasMenu, columnWidths, dispatchWidthsAction } =
+  const { onSelect, hasMenu, columnWidths, dispatchWidthsAction, updateGetWidthsList: updateGetWidthsList } =
     useContext(TableContext)
   const onChange = useCallback<CheckboxChangeHandler>(
     e => {
@@ -84,6 +84,31 @@ export const TableHeader: React.FC<TableHeaderProps> = ({
     }
   }, [dispatchWidthsAction, columnWidths.length, numberOfColumns])
   const gridTemplateColumnsStyle = useGridTemplateColumns()
+
+  const refs = useRef<HTMLDivElement[]>([]);
+
+  const ttt = useMemo(() => {
+    return React.Children.map(children, (cell, i) =>
+      <TableHeaderCellContent key={i} ref={(ref: HTMLDivElement) => refs.current[i] = ref}>{cell}</TableHeaderCellContent>
+    )
+  }, [])
+
+  const getCurrentRefs = useCallback((): Array<number> => {
+    const widestChildren: number[] = refs.current.map((divElement: HTMLDivElement) => {
+      if (!divElement) return 0;
+      const divElementChildren = Array.prototype.slice.call(divElement.children);
+      const childrenWidths = divElementChildren.map(e => e.getBoundingClientRect().width);
+      const widestChild = Math.max(...childrenWidths);
+      return widestChild;
+    })
+    return widestChildren
+  }, [])
+
+  useEffect(() => {
+    if (updateGetWidthsList)
+      updateGetWidthsList(getCurrentRefs)
+  }, [])
+  
   return (
     <TableHeaderGrid style={gridTemplateColumnsStyle} {...props}>
       {onSelect !== undefined ? (
@@ -94,10 +119,11 @@ export const TableHeader: React.FC<TableHeaderProps> = ({
       {overlay !== undefined ? (
         <OverlayContainer>{overlay}</OverlayContainer>
       ) : (
-        React.Children.map(children, (cell, i) => {
-          return <TableHeaderCellContent key={i}>{cell}</TableHeaderCellContent>
-        })
-      )}
+          React.Children.map(children, (cell, i) => {
+            return <TableHeaderCellContent key={i}>{cell}</TableHeaderCellContent>
+          })
+        )}
+        {ttt}
       {overlay === undefined && hasMenu ? (
         <TableHeaderCellMenu>
           {menu !== undefined ? menu : null}

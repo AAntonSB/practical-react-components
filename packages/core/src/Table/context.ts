@@ -52,6 +52,8 @@ export const TableContext = createContext<{
   readonly onSelect?: (selected: boolean, id?: string) => void
   readonly hasMenu: boolean
   readonly onWidthsChange?: (widths: ReadonlyArray<number>) => void
+  getWidthsList?: number[][]
+  updateGetWidthsList?: (callback: () => Array<number>) => void
 }>({
   minColumnWidth: 0,
   columnWidths: [],

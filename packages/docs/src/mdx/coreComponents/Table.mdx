@@ -42,21 +42,27 @@ export const TABLE_HEADER_DATA = [
   { id: 'serial-number', title: 'Serial number', width: 200 },
   { id: 'name', title: 'Name', width: 300 },
   { id: 'ip-address', title: 'IP address', width: 400 },
+  { id: "TTT", title: "TTT", width: 400}
 ]
 
 export const DEVICE_LIST = [
-  { serialNumber: 'FACEFACE0001', name: 'a', ip: '192.168.0.1' },
-  { serialNumber: 'FACEFACE0002', name: 'b', ip: '192.168.0.2' },
-  { serialNumber: 'FACEFACE0003', name: 'c', ip: '192.168.0.3' },
-  { serialNumber: 'FACEFACE0004', name: 'd', ip: '192.168.0.4' },
-  { serialNumber: 'FACEFACE0005', name: 'e', ip: '192.168.0.5' },
-  { serialNumber: 'FACEFACE0006', name: 'f', ip: '192.168.0.6' },
-  { serialNumber: 'FACEFACE0007', name: 'g', ip: '192.168.0.7' },
-  { serialNumber: 'FACEFACE0008', name: 'h', ip: '192.168.0.8' },
-  { serialNumber: 'FACEFACE0009', name: 'i', ip: '192.168.0.9' },
-  { serialNumber: 'FACEFACE0010', name: 'j', ip: '192.168.0.10' },
-  { serialNumber: 'FACEFACE0011', name: 'k', ip: '192.168.0.11' },
-  { serialNumber: 'FACEFACE0012', name: 'l', ip: '192.168.0.12' },
+  { serialNumber: 'FACEFACE0001', name: 'a', ip: '192.168.0.1', TTT: "wtf, cool story" },
+  { serialNumber: 'FACEFACE0002', name: 'b', ip: '192.168.0.2', TTT: "wtf, cool story" },
+  { serialNumber: 'FACEFACE0003', name: 'c', ip: '192.168.0.3', TTT: "wtf, cool story" },
+  { serialNumber: 'FACEFACE0004', name: 'd', ip: '192.168.0.4', TTT: "wtf, cool story" },
+  { serialNumber: 'FACEFACE0005', name: 'e', ip: '192.168.0.5', TTT: "wtf, cool story" },
+  { serialNumber: 'FACEFACE0006', name: 'f', ip: '192.168.0.6', TTT: "wtf, cool story" },
+  { serialNumber: 'FACEFACE0007', name: 'g', ip: '192.168.0.7', TTT: "wtf, cool story" },
+  { serialNumber: 'FACEFACE0008', name: 'h', ip: '192.168.0.8', TTT: "wtf, cool story" },
+  { serialNumber: 'FACEFACE0009', name: 'i', ip: '192.168.0.9', TTT: "wtf, cool story" },
+  { serialNumber: 'FACEFACE0010', name: 'j', ip: '192.168.0.10', TTT: "wtf, cool story" },
+  { serialNumber: 'FACEFACE0011', name: 'k', ip: '192.168.0.11', TTT: "wtf, cool story" },
+  { serialNumber: 'FACEFACE0012', name: 'l', ip: '192.168.0.12', TTT: "wtf, cool story" },
+]
+
+export const BIG_LIST = [
+  ...DEVICE_LIST, ...DEVICE_LIST, ...DEVICE_LIST, ...DEVICE_LIST, ...DEVICE_LIST, ...DEVICE_LIST, ...DEVICE_LIST, ...DEVICE_LIST, ...DEVICE_LIST, ...DEVICE_LIST,
+    ...DEVICE_LIST, ...DEVICE_LIST, ...DEVICE_LIST, ...DEVICE_LIST, ...DEVICE_LIST, ...DEVICE_LIST, ...DEVICE_LIST, ...DEVICE_LIST, ...DEVICE_LIST, ...DEVICE_LIST, 
 ]
 
 export const ITEMS = [
@@ -79,12 +85,12 @@ export const DemoComponent = ({}) => {
       if (selected) {
         id !== undefined
           ? add(id)
-          : reset(DEVICE_LIST.map(device => device.serialNumber))
+          : reset(BIG_LIST.map(device => device.serialNumber))
       } else {
         id !== undefined ? remove(id) : reset([])
       }
     },
-    [DEVICE_LIST]
+    [BIG_LIST]
   )
   const [key, setKey] = useState('')
   const clickFunc = useCallback(
@@ -109,9 +115,9 @@ export const DemoComponent = ({}) => {
       >
         <TableHeader
           selected={
-            selection.size !== 0 && selection.size === DEVICE_LIST.length
+            selection.size !== 0 && selection.size === BIG_LIST.length
           }
-          partial={selection.size > 0 && selection.size < DEVICE_LIST.length}
+          partial={selection.size > 0 && selection.size < BIG_LIST.length}
           overlay={
             selection.size === 0 ? undefined : (
               <div>
@@ -134,10 +140,10 @@ export const DemoComponent = ({}) => {
             <TableHeaderText key={id}>{title}</TableHeaderText>
           ))}
         </TableHeader>
-        {DEVICE_LIST.map((device, index) => (
+        {BIG_LIST.map((device, index) => (
           <TableRow
             id={device.serialNumber}
-            key={device.serialNumber}
+            key={index}
             selected={selection.has(device.serialNumber)}
             disabled={index === 2}
             menu={
@@ -159,6 +165,7 @@ export const DemoComponent = ({}) => {
             <Typography>{device.serialNumber}</Typography>
             <Typography>{device.name}</Typography>
             <Typography>{device.ip}</Typography>
+            <Typography>{device.TTT}</Typography>
           </TableRow>
         ))}
       </Table>

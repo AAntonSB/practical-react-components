@@ -6,7 +6,6 @@ import { CheckboxChangeHandler, Checkbox } from '../Checkbox'
 
 import { useGridTemplateColumns } from './Table'
 import { TableContext } from './context'
-import { modifyColumnMaxWidth } from './ColumnResizerRow'
 
 import {
   TableCellMenu,
@@ -115,9 +114,6 @@ export interface TableRowProps extends BaseProps {
   readonly onClicked?: React.MouseEventHandler<HTMLDivElement>
 }
 
-let arr: number[] = []
-
-
 export const TableRow: React.FC<TableRowProps> = React.memo(
   ({
     className,
@@ -130,7 +126,7 @@ export const TableRow: React.FC<TableRowProps> = React.memo(
     menu,
     ...props
   }) => {
-    const { onSelect, hasMenu } = useContext(TableContext)
+    const { onSelect, hasMenu, updateGetWidthsList: updateGetWidthsList } = useContext(TableContext)
     const onChange = useCallback<CheckboxChangeHandler>(
       e => {
         if (onSelect !== undefined) {
@@ -168,26 +164,25 @@ export const TableRow: React.FC<TableRowProps> = React.memo(
 
     const tableCellContent = useMemo(() => {
       return React.Children.map(children, (cell, cellId) => {
-        return <TableCellContent ref={(ref: HTMLDivElement) => refs.current.push(ref)} key={cellId}>{cell}</TableCellContent>
+        return <TableCellContent ref={(ref: HTMLDivElement) => refs.current[cellId] = ref} key={cellId}>{cell}</TableCellContent>
       })
     }, [children])
 
-    useLayoutEffect(() => {
-      if (!tableCellContent) return;
-      
-      const widestChildren: number[] = refs.current.map((divElement: HTMLDivElement) => {
+    // Create as a callback function that retrieves the information so that it dosen't compute unessecarily 
+    const getCurrentRefs = useCallback((): Array<number> => {
+      return refs.current.map((divElement: HTMLDivElement) => {
         if (!divElement) return 0;
         const divElementChildren = Array.prototype.slice.call(divElement.children);
         const childrenWidths = divElementChildren.map(e => e.getBoundingClientRect().width);
         const widestChild = Math.max(...childrenWidths);
         return widestChild;
       })
+    }, [])
 
-      modifyColumnMaxWidth(widestChildren, tableCellContent.length)
-
-      //Resets the refs, preferable solution would be too make the tableCellContent overwrite the previous refs array
-      refs.current = []
-    }, [tableCellContent])
+    useEffect(() => {
+      if (updateGetWidthsList)
+        updateGetWidthsList(getCurrentRefs)
+    }, [])
 
     const tableMenuContent = useMemo(() => {
       return hasMenu ? (

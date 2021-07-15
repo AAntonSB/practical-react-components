@@ -26,6 +26,7 @@ interface ColumnDivider {
  * @param tx Divider translation
  * @param divider Divider
  */
+
 const clipTranslation = (
   tx: number,
   divider: ColumnDivider,
@@ -96,24 +97,33 @@ const ResizeMarker = styled.div<{
   }
 `
 
-let widestContentWidths: number[] = []
 
-export const modifyColumnMaxWidth = (columnContentWidth: number[], columnContentWidthLength: number) => {
-  for (let i = 0; i < columnContentWidthLength; i++) {
-    if (widestContentWidths[i] === undefined) {
-      widestContentWidths[i] = columnContentWidth[i]
-    } else if (widestContentWidths[i] <= columnContentWidth[i]) {
-      widestContentWidths[i] = columnContentWidth[i]
+
+const getModifiedWidths = (newColumnWidths: Array<Array<number>>, currentColumnWidths: Array<number>, clickedColumn: number) => {
+  let arr: number[] = []
+
+  for (let i = 0; i < newColumnWidths.length; i++) {
+    const element = newColumnWidths[i];
+    for (let j = 0; j < newColumnWidths[i].length; i++) {
+      if (!arr[j]) {
+        return arr[j] = element[j];
+      }
+      if (element[j] < arr[j]) return
+      return arr[j] = element[j];
     }
   }
-}
 
-const getModifiedWidths = (columnWidths: readonly number[]) => {
-  let newColumnSizes = widestContentWidths.map(e => e + TABLE_DIMENSIONS.PADDING_LEFT)
-  // Get the padding to fill the table to the right
-  const paddingRight = columnWidths.reduce((acc, cur) => acc + cur, 0) - newColumnSizes.reduce((acc, cur) => acc + cur, 0)
-  newColumnSizes[newColumnSizes.length - 1] += paddingRight;
-  return newColumnSizes
+  arr = arr.map((e, i) => {
+    if (i + 1 !== clickedColumn && i !== clickedColumn && i - 1 !== clickedColumn) {
+      return currentColumnWidths[i];
+    } else {
+      return e
+    }
+  })
+
+  const paddingRight = currentColumnWidths.reduce((acc, cur) => acc + cur, 0) - arr.reduce((acc, cur) => acc + cur, 0);
+  arr[arr.length - 1] += paddingRight;
+  return arr;
 }
 
 /**
@@ -126,6 +136,7 @@ const getModifiedWidths = (columnWidths: readonly number[]) => {
 
 interface ColumnResizerProps {
   readonly divider: ColumnDivider
+  readonly index: number
   readonly setDragging: (dragging: boolean) => void
   readonly onDragEnd: (t: readonly [number, number]) => void
 }
@@ -134,8 +145,9 @@ const ColumnResizer: React.FunctionComponent<ColumnResizerProps> = ({
   divider,
   setDragging,
   onDragEnd,
+  index
 }) => {
-  const { minColumnWidth, dispatchWidthsAction, columnWidths } = useContext(TableContext)
+  const { minColumnWidth, dispatchWidthsAction, columnWidths, getWidthsList } = useContext(TableContext)
 
   const [[tx], onDragStart, dragging] = useDraggable(onDragEnd)
   const txClipped = clipTranslation(tx, divider, minColumnWidth)
@@ -150,8 +162,9 @@ const ColumnResizer: React.FunctionComponent<ColumnResizerProps> = ({
     }
   }, [dragging, setDragging])
 
+  // dispatchWidthsAction({ type: WidthActionType.UPDATE_WIDTHS, widths: getModifiedWidths(columnWidths, index)
   return (
-    <ResizeContainer onDoubleClick={() => dispatchWidthsAction({ type: WidthActionType.UPDATE_WIDTHS, widths: getModifiedWidths(columnWidths) })} left={divider.offset + txClipped}>
+    <ResizeContainer onDoubleClick={() => dispatchWidthsAction({ type: WidthActionType.UPDATE_WIDTHS, widths: getModifiedWidths(getWidthsList?.map(e => e()), columnWidths, index) })} left={divider.offset + txClipped}>
       <ResizeHandle onPointerDown={onDragStart} />
       <ResizeMarker dragging={dragging} />
     </ResizeContainer>
@@ -235,6 +248,7 @@ export const ColumnResizerRow: React.FunctionComponent<ColumnResizerRowProps> =
             <ColumnResizer
               setDragging={setDragging}
               key={`${i}:${divider.offset}`}
+              index={i}
               divider={divider}
               onDragEnd={dragEndHandlers[i]}
             />
